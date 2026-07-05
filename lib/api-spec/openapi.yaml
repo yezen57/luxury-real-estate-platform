@@ -1,22 +1,26 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Dayar Al-Ahlam Real Estate API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: apartments
+    description: Apartment operations
+  - name: admin
+    description: Admin operations
+  - name: stats
+    description: Statistics
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,13 +28,486 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /apartments:
+    get:
+      operationId: listApartments
+      tags: [apartments]
+      summary: List all apartments
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: city
+          in: query
+          schema:
+            type: string
+        - name: district
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [available, unavailable]
+        - name: minPrice
+          in: query
+          schema:
+            type: number
+        - name: maxPrice
+          in: query
+          schema:
+            type: number
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            enum: [price_asc, price_desc, date_asc, date_desc]
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of apartments
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApartmentList"
+
+    post:
+      operationId: createApartment
+      tags: [apartments]
+      summary: Create a new apartment (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApartmentInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Apartment"
+        "401":
+          description: Unauthorized
+
+  /apartments/{id}:
+    get:
+      operationId: getApartment
+      tags: [apartments]
+      summary: Get apartment by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Apartment details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Apartment"
+        "404":
+          description: Not found
+
+    patch:
+      operationId: updateApartment
+      tags: [apartments]
+      summary: Update apartment (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApartmentUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Apartment"
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not found
+
+    delete:
+      operationId: deleteApartment
+      tags: [apartments]
+      summary: Delete apartment (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not found
+
+  /apartments/{id}/status:
+    patch:
+      operationId: toggleApartmentStatus
+      tags: [apartments]
+      summary: Toggle apartment availability (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StatusUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Apartment"
+        "401":
+          description: Unauthorized
+
+  /admin/login:
+    post:
+      operationId: adminLogin
+      tags: [admin]
+      summary: Admin login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminCredentials"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthToken"
+        "401":
+          description: Invalid credentials
+
+  /admin/logout:
+    post:
+      operationId: adminLogout
+      tags: [admin]
+      summary: Admin logout
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /admin/me:
+    get:
+      operationId: getAdminMe
+      tags: [admin]
+      summary: Get current admin session
+      responses:
+        "200":
+          description: Admin info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminInfo"
+        "401":
+          description: Unauthorized
+
+  /stats:
+    get:
+      operationId: getStats
+      tags: [stats]
+      summary: Get platform statistics
+      responses:
+        "200":
+          description: Stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlatformStats"
+
+  /stats/cities:
+    get:
+      operationId: getCityStats
+      tags: [stats]
+      summary: Get apartments grouped by city
+      responses:
+        "200":
+          description: City breakdown
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CityCount"
+
 components:
   schemas:
     HealthStatus:
       type: object
+      required: [status]
       properties:
         status:
           type: string
-      required:
-        - status
 
+    Apartment:
+      type: object
+      required:
+        - id
+        - apartmentNumber
+        - title
+        - city
+        - district
+        - address
+        - description
+        - rooms
+        - bathrooms
+        - area
+        - priceDay
+        - priceWeek
+        - priceMonth
+        - status
+        - images
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+        apartmentNumber:
+          type: string
+        title:
+          type: string
+        city:
+          type: string
+        district:
+          type: string
+        address:
+          type: string
+        description:
+          type: string
+        rooms:
+          type: integer
+        bathrooms:
+          type: integer
+        area:
+          type: number
+        priceDay:
+          type: number
+        priceWeek:
+          type: number
+        priceMonth:
+          type: number
+        status:
+          type: string
+          enum: [available, unavailable]
+        images:
+          type: array
+          items:
+            type: string
+        video:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+
+    ApartmentList:
+      type: object
+      required: [data, total, page, limit]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Apartment"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    ApartmentInput:
+      type: object
+      required:
+        - apartmentNumber
+        - title
+        - city
+        - district
+        - address
+        - description
+        - rooms
+        - bathrooms
+        - area
+        - priceDay
+        - priceWeek
+        - priceMonth
+      properties:
+        apartmentNumber:
+          type: string
+        title:
+          type: string
+        city:
+          type: string
+        district:
+          type: string
+        address:
+          type: string
+        description:
+          type: string
+        rooms:
+          type: integer
+        bathrooms:
+          type: integer
+        area:
+          type: number
+        priceDay:
+          type: number
+        priceWeek:
+          type: number
+        priceMonth:
+          type: number
+        status:
+          type: string
+          enum: [available, unavailable]
+        images:
+          type: array
+          items:
+            type: string
+        video:
+          type: string
+
+    ApartmentUpdate:
+      type: object
+      properties:
+        apartmentNumber:
+          type: string
+        title:
+          type: string
+        city:
+          type: string
+        district:
+          type: string
+        address:
+          type: string
+        description:
+          type: string
+        rooms:
+          type: integer
+        bathrooms:
+          type: integer
+        area:
+          type: number
+        priceDay:
+          type: number
+        priceWeek:
+          type: number
+        priceMonth:
+          type: number
+        status:
+          type: string
+          enum: [available, unavailable]
+        images:
+          type: array
+          items:
+            type: string
+        video:
+          type: string
+
+    StatusUpdate:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [available, unavailable]
+
+    AdminCredentials:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+
+    AuthToken:
+      type: object
+      required: [success, message]
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+
+    AdminInfo:
+      type: object
+      required: [username, authenticated]
+      properties:
+        username:
+          type: string
+        authenticated:
+          type: boolean
+
+    MessageResponse:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+
+    PlatformStats:
+      type: object
+      required: [total, available, unavailable, cities]
+      properties:
+        total:
+          type: integer
+        available:
+          type: integer
+        unavailable:
+          type: integer
+        cities:
+          type: integer
+        recentApartments:
+          type: array
+          items:
+            $ref: "#/components/schemas/Apartment"
+
+    CityCount:
+      type: object
+      required: [city, count]
+      properties:
+        city:
+          type: string
+        count:
+          type: integer
