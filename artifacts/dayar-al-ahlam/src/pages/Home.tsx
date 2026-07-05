@@ -3,8 +3,8 @@ import { useGetStats, useGetCityStats, useListApartments } from "@workspace/api-
 import { motion, useScroll, useTransform } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import LogoIconGold from "@assets/ديار_بدون_خلفيه-01_1783264617963.png";
 import LogoIconWhite from "@assets/ديار_بدون_خلفيه-03_1783264617965.png";
+import LogoIconGold from "@assets/ديار_بدون_خلفيه-01_1783264617963.png";
 import { ApartmentCard } from "@/components/apartment/ApartmentCard";
 import { Building2, Key, Star, ShieldCheck } from "lucide-react";
 import { useRef } from "react";
@@ -27,10 +27,9 @@ export default function Home() {
   return (
     <Layout>
       {/* Hero Section */}
-      <section ref={heroRef} className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
+      <section ref={heroRef} className="relative min-h-[90vh] flex items-center justify-center overflow-hidden bg-black">
         <motion.div style={{ y, opacity }} className="absolute inset-0 z-0">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/20 via-black to-black opacity-60"></div>
-          {/* Decorative noise/texture could go here */}
           <div className="absolute inset-0 opacity-[0.03] bg-[url('https://grainy-gradients.vercel.app/noise.svg')]"></div>
         </motion.div>
 
@@ -41,7 +40,11 @@ export default function Home() {
             transition={{ duration: 1, ease: "easeOut" }}
             className="mb-8"
           >
-            <img src={LogoIconGold} alt="Icon" className="w-32 h-32 md:w-48 md:h-48 object-contain drop-shadow-[0_0_15px_rgba(210,173,38,0.5)]" />
+            <img
+              src={LogoIconWhite}
+              alt="ديار الأحلام"
+              className="w-40 h-40 md:w-56 md:h-56 object-contain drop-shadow-[0_0_20px_rgba(255,255,255,0.2)]"
+            />
           </motion.div>
 
           <motion.h1
@@ -77,15 +80,15 @@ export default function Home() {
         </div>
 
         {/* Floating elements */}
-        <motion.div 
-          animate={{ y: [0, -20, 0] }} 
+        <motion.div
+          animate={{ y: [0, -20, 0] }}
           transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute left-[10%] top-[30%] opacity-20 hidden lg:block"
+          className="absolute left-[10%] top-[30%] opacity-15 hidden lg:block"
         >
           <img src={LogoIconWhite} alt="" className="w-24 h-24 blur-[2px]" />
         </motion.div>
-        <motion.div 
-          animate={{ y: [0, 20, 0] }} 
+        <motion.div
+          animate={{ y: [0, 20, 0] }}
           transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
           className="absolute right-[10%] bottom-[30%] opacity-10 hidden lg:block"
         >
@@ -94,25 +97,25 @@ export default function Home() {
       </section>
 
       {/* Stats Section */}
-      <section className="py-20 border-y border-white/5 relative bg-white/[0.02]">
+      <section className="py-20 border-y border-black/5 dark:border-white/5 relative bg-black/[0.02] dark:bg-white/[0.02]">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {isLoadingStats ? (
               Array(4).fill(0).map((_, i) => (
-                <Skeleton key={i} className="h-32 w-full bg-white/5 rounded-2xl" />
+                <Skeleton key={i} className="h-32 w-full bg-black/5 dark:bg-white/5 rounded-2xl" />
               ))
             ) : (
               <>
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   className="flex flex-col items-center justify-center p-6 text-center"
                 >
                   <span className="text-4xl md:text-5xl font-bold text-primary mb-2">{stats?.total || 0}</span>
-                  <span className="text-white/60">إجمالي الوحدات</span>
+                  <span className="text-black/60 dark:text-white/60">إجمالي الوحدات</span>
                 </motion.div>
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
@@ -120,9 +123,9 @@ export default function Home() {
                   className="flex flex-col items-center justify-center p-6 text-center"
                 >
                   <span className="text-4xl md:text-5xl font-bold text-primary mb-2">{stats?.available || 0}</span>
-                  <span className="text-white/60">وحدات متاحة</span>
+                  <span className="text-black/60 dark:text-white/60">وحدات متاحة</span>
                 </motion.div>
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
@@ -130,17 +133,17 @@ export default function Home() {
                   className="flex flex-col items-center justify-center p-6 text-center"
                 >
                   <span className="text-4xl md:text-5xl font-bold text-primary mb-2">{stats?.cities || 0}</span>
-                  <span className="text-white/60">مدن التغطية</span>
+                  <span className="text-black/60 dark:text-white/60">مدن التغطية</span>
                 </motion.div>
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: 0.3 }}
                   className="flex flex-col items-center justify-center p-6 text-center"
                 >
-                  <span className="text-4xl md:text-5xl font-bold text-primary mb-2">100%</span>
-                  <span className="text-white/60">رضا العملاء</span>
+                  <span className="text-4xl md:text-5xl font-bold text-primary mb-2">10+</span>
+                  <span className="text-black/60 dark:text-white/60">سنوات خبرة</span>
                 </motion.div>
               </>
             )}
@@ -153,20 +156,20 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
             <div>
-              <motion.h2 
+              <motion.h2
                 initial={{ opacity: 0, x: 20 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
-                className="text-3xl md:text-5xl font-bold text-white mb-4"
+                className="text-3xl md:text-5xl font-bold dark:text-white text-black mb-4"
               >
                 وحدات <span className="text-primary">مميزة</span>
               </motion.h2>
-              <motion.p 
+              <motion.p
                 initial={{ opacity: 0, x: 20 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: 0.1 }}
-                className="text-white/60 text-lg max-w-xl"
+                className="text-black/60 dark:text-white/60 text-lg max-w-xl"
               >
                 تصفح أحدث الوحدات السكنية المضافة إلى محفظتنا العقارية، مختارة بعناية لتناسب ذوقك الرفيع.
               </motion.p>
@@ -181,14 +184,14 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {isLoadingFeatured ? (
               Array(6).fill(0).map((_, i) => (
-                <Skeleton key={i} className="h-[450px] w-full rounded-2xl bg-white/5" />
+                <Skeleton key={i} className="h-[450px] w-full rounded-2xl bg-black/5 dark:bg-white/5" />
               ))
             ) : featured?.data?.length ? (
               featured.data.map((apt, index) => (
                 <ApartmentCard key={apt.id} apartment={apt} index={index} />
               ))
             ) : (
-              <div className="col-span-full py-20 text-center text-white/50">
+              <div className="col-span-full py-20 text-center text-black/50 dark:text-white/50">
                 لا توجد وحدات متاحة حالياً.
               </div>
             )}
@@ -197,14 +200,14 @@ export default function Home() {
       </section>
 
       {/* About/Features */}
-      <section className="py-32 bg-white/[0.02] border-y border-white/5 relative overflow-hidden">
+      <section className="py-32 bg-black/[0.02] dark:bg-white/[0.02] border-y border-black/5 dark:border-white/5 relative overflow-hidden">
         <div className="absolute right-0 top-0 w-1/3 h-full bg-gradient-to-l from-primary/10 to-transparent opacity-50 blur-3xl"></div>
         <div className="container mx-auto px-4 relative z-10">
           <div className="text-center mb-20">
-            <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">
+            <h2 className="text-3xl md:text-5xl font-bold dark:text-white text-black mb-4">
               لماذا <span className="text-primary">ديار الأحلام</span>؟
             </h2>
-            <p className="text-white/60 text-lg max-w-2xl mx-auto">
+            <p className="text-black/60 dark:text-white/60 text-lg max-w-2xl mx-auto">
               نحن لا نقدم مجرد شقق، بل أسلوب حياة متكامل يجمع بين الفخامة والأمان والموقع الاستراتيجي.
             </p>
           </div>
@@ -222,13 +225,13 @@ export default function Home() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: idx * 0.1 }}
-                className="p-8 rounded-2xl bg-black border border-white/5 hover:border-primary/30 transition-colors group"
+                className="p-8 rounded-2xl bg-white dark:bg-black border border-black/5 dark:border-white/5 hover:border-primary/30 transition-colors group shadow-sm dark:shadow-none"
               >
                 <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-6 group-hover:scale-110 transition-transform">
                   {feature.icon}
                 </div>
-                <h3 className="text-xl font-bold text-white mb-3">{feature.title}</h3>
-                <p className="text-white/60 leading-relaxed">{feature.desc}</p>
+                <h3 className="text-xl font-bold dark:text-white text-black mb-3">{feature.title}</h3>
+                <p className="text-black/60 dark:text-white/60 leading-relaxed">{feature.desc}</p>
               </motion.div>
             ))}
           </div>
@@ -236,12 +239,12 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-32 relative flex items-center justify-center overflow-hidden">
+      <section className="py-32 relative flex items-center justify-center overflow-hidden bg-black">
         <div className="absolute inset-0 bg-primary/20"></div>
         <div className="absolute inset-0 bg-black/80 backdrop-blur-sm"></div>
-        
+
         <div className="container relative z-10 mx-auto px-4 text-center max-w-3xl">
-          <motion.h2 
+          <motion.h2
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}

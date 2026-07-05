@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { useGetAdminMe, useAdminLogout } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,12 @@ export function AdminLayout({ children }: { children: ReactNode }) {
 
   const logout = useAdminLogout();
 
+  useEffect(() => {
+    if (!isLoading && (isError || !admin?.authenticated)) {
+      setLocation("/admin/login");
+    }
+  }, [isLoading, isError, admin, setLocation]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -24,7 +30,6 @@ export function AdminLayout({ children }: { children: ReactNode }) {
   }
 
   if (isError || !admin?.authenticated) {
-    setLocation("/admin/login");
     return null;
   }
 

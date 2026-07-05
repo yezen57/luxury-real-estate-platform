@@ -36,9 +36,11 @@ const formSchema = z.object({
   priceWeek: z.coerce.number().min(1, "السعر الأسبوعي مطلوب"),
   priceMonth: z.coerce.number().min(1, "السعر الشهري مطلوب"),
   status: z.enum(["available", "unavailable"]).default("available"),
-  images: z.array(z.object({ url: z.string().url("يجب أن يكون رابطاً صحيحاً") })).optional().default([]),
-  video: z.string().url("يجب أن يكون رابطاً صحيحاً").optional().or(z.literal("")),
+  images: z.array(z.object({ url: z.string().min(1, "الرابط مطلوب") })).optional().default([]),
+  video: z.string().optional().or(z.literal("")),
 });
+
+type FormValues = z.infer<typeof formSchema>;
 
 export default function ApartmentForm() {
   const params = useParams();
@@ -55,7 +57,7 @@ export default function ApartmentForm() {
   const createMutation = useCreateApartment();
   const updateMutation = useUpdateApartment();
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       apartmentNumber: "",
@@ -84,18 +86,29 @@ export default function ApartmentForm() {
   useEffect(() => {
     if (isEdit && apartment) {
       form.reset({
-        ...apartment,
+        apartmentNumber: apartment.apartmentNumber,
+        title: apartment.title,
+        city: apartment.city,
+        district: apartment.district,
+        address: apartment.address,
+        description: apartment.description,
+        rooms: apartment.rooms,
+        bathrooms: apartment.bathrooms,
+        area: apartment.area,
+        priceDay: apartment.priceDay,
+        priceWeek: apartment.priceWeek,
+        priceMonth: apartment.priceMonth,
+        status: apartment.status,
         images: apartment.images?.map(url => ({ url })) || [],
         video: apartment.video || "",
       });
     }
   }, [apartment, isEdit, form]);
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
-    // Transform images array of objects to array of strings
+  const onSubmit = (values: FormValues) => {
     const formattedValues = {
       ...values,
-      images: values.images?.map(img => img.url) || [],
+      images: values.images?.map(img => img.url).filter(Boolean) || [],
       video: values.video || undefined,
     };
 
@@ -110,7 +123,10 @@ export default function ApartmentForm() {
             queryClient.invalidateQueries({ queryKey: getGetApartmentQueryKey(id) });
             setLocation("/admin");
           },
-          onError: () => toast({ variant: "destructive", title: "حدث خطأ" })
+          onError: (err) => {
+            console.error(err);
+            toast({ variant: "destructive", title: "حدث خطأ أثناء التحديث" });
+          }
         }
       );
     } else {
@@ -123,11 +139,20 @@ export default function ApartmentForm() {
             queryClient.invalidateQueries({ queryKey: getGetStatsQueryKey() });
             setLocation("/admin");
           },
-          onError: () => toast({ variant: "destructive", title: "حدث خطأ" })
+          onError: (err) => {
+            console.error(err);
+            toast({ variant: "destructive", title: "حدث خطأ أثناء الإضافة، تأكد من تسجيل الدخول" });
+          }
         }
       );
     }
   };
+
+  const egyptCities = [
+    "القاهرة", "الجيزة", "الإسكندرية", "الشرقية", "المنصورة",
+    "أسيوط", "الغردقة", "شرم الشيخ", "الإسماعيلية", "السويس",
+    "بورسعيد", "المنيا", "سوهاج", "أسوان", "الأقصر",
+  ];
 
   if (isEdit && isLoadingApartment) {
     return (
@@ -156,16 +181,16 @@ export default function ApartmentForm() {
         <div className="bg-white/5 border border-white/10 rounded-2xl p-6 md:p-8">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
                   name="apartmentNumber"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-white/80">رقم الوحدة</FormLabel>
+                      <FormLabel className="text-white/80">رقم الوحدة (مثال: 00001)</FormLabel>
                       <FormControl>
-                        <Input className="bg-black/50 border-white/10 text-white h-12" {...field} />
+                        <Input className="bg-black/50 border-white/10 text-white h-12 font-mono" placeholder="00001" {...field} />
                       </FormControl>
                       <FormMessage className="text-red-400" />
                     </FormItem>
@@ -193,9 +218,18 @@ export default function ApartmentForm() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-white/80">المدينة</FormLabel>
-                      <FormControl>
-                        <Input className="bg-black/50 border-white/10 text-white h-12" {...field} />
-                      </FormControl>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="bg-black/50 border-white/10 text-white h-12">
+                            <SelectValue placeholder="اختر المدينة" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent className="bg-gray-900 border-white/10 text-white">
+                          {egyptCities.map(c => (
+                            <SelectItem key={c} value={c}>{c}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage className="text-red-400" />
                     </FormItem>
                   )}
@@ -205,7 +239,7 @@ export default function ApartmentForm() {
                   name="district"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-white/80">الحي</FormLabel>
+                      <FormLabel className="text-white/80">الحي / المنطقة</FormLabel>
                       <FormControl>
                         <Input className="bg-black/50 border-white/10 text-white h-12" {...field} />
                       </FormControl>
@@ -236,7 +270,7 @@ export default function ApartmentForm() {
                     <FormItem>
                       <FormLabel className="text-white/80">عدد الغرف</FormLabel>
                       <FormControl>
-                        <Input type="number" className="bg-black/50 border-white/10 text-white h-12" {...field} />
+                        <Input type="number" min={1} className="bg-black/50 border-white/10 text-white h-12" {...field} />
                       </FormControl>
                       <FormMessage className="text-red-400" />
                     </FormItem>
@@ -249,7 +283,7 @@ export default function ApartmentForm() {
                     <FormItem>
                       <FormLabel className="text-white/80">عدد الحمامات</FormLabel>
                       <FormControl>
-                        <Input type="number" className="bg-black/50 border-white/10 text-white h-12" {...field} />
+                        <Input type="number" min={1} className="bg-black/50 border-white/10 text-white h-12" {...field} />
                       </FormControl>
                       <FormMessage className="text-red-400" />
                     </FormItem>
@@ -262,7 +296,7 @@ export default function ApartmentForm() {
                     <FormItem>
                       <FormLabel className="text-white/80">المساحة (متر مربع)</FormLabel>
                       <FormControl>
-                        <Input type="number" className="bg-black/50 border-white/10 text-white h-12" {...field} />
+                        <Input type="number" min={1} className="bg-black/50 border-white/10 text-white h-12" {...field} />
                       </FormControl>
                       <FormMessage className="text-red-400" />
                     </FormItem>
@@ -276,9 +310,9 @@ export default function ApartmentForm() {
                   name="priceDay"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-white/80">السعر اليومي (ر.س)</FormLabel>
+                      <FormLabel className="text-white/80">السعر اليومي (ج.م)</FormLabel>
                       <FormControl>
-                        <Input type="number" className="bg-black/50 border-white/10 text-white h-12" {...field} />
+                        <Input type="number" min={1} className="bg-black/50 border-white/10 text-white h-12" {...field} />
                       </FormControl>
                       <FormMessage className="text-red-400" />
                     </FormItem>
@@ -289,9 +323,9 @@ export default function ApartmentForm() {
                   name="priceWeek"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-white/80">السعر الأسبوعي (ر.س)</FormLabel>
+                      <FormLabel className="text-white/80">السعر الأسبوعي (ج.م)</FormLabel>
                       <FormControl>
-                        <Input type="number" className="bg-black/50 border-white/10 text-white h-12" {...field} />
+                        <Input type="number" min={1} className="bg-black/50 border-white/10 text-white h-12" {...field} />
                       </FormControl>
                       <FormMessage className="text-red-400" />
                     </FormItem>
@@ -302,9 +336,9 @@ export default function ApartmentForm() {
                   name="priceMonth"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-white/80">السعر الشهري (ر.س)</FormLabel>
+                      <FormLabel className="text-white/80">السعر الشهري (ج.م)</FormLabel>
                       <FormControl>
-                        <Input type="number" className="bg-black/50 border-white/10 text-white h-12" {...field} />
+                        <Input type="number" min={1} className="bg-black/50 border-white/10 text-white h-12" {...field} />
                       </FormControl>
                       <FormMessage className="text-red-400" />
                     </FormItem>
@@ -318,7 +352,7 @@ export default function ApartmentForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-white/80">الحالة</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger className="bg-black/50 border-white/10 text-white h-12">
                           <SelectValue placeholder="اختر حالة الوحدة" />
@@ -341,9 +375,9 @@ export default function ApartmentForm() {
                   <FormItem>
                     <FormLabel className="text-white/80">الوصف</FormLabel>
                     <FormControl>
-                      <Textarea 
-                        className="bg-black/50 border-white/10 text-white min-h-[150px] resize-y" 
-                        {...field} 
+                      <Textarea
+                        className="bg-black/50 border-white/10 text-white min-h-[150px] resize-y"
+                        {...field}
                       />
                     </FormControl>
                     <FormMessage className="text-red-400" />
@@ -353,7 +387,7 @@ export default function ApartmentForm() {
 
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <FormLabel className="text-white/80 text-lg">الصور</FormLabel>
+                  <FormLabel className="text-white/80 text-lg">روابط الصور</FormLabel>
                   <Button
                     type="button"
                     variant="outline"
@@ -365,7 +399,7 @@ export default function ApartmentForm() {
                     إضافة صورة
                   </Button>
                 </div>
-                
+
                 {fields.map((field, index) => (
                   <FormField
                     key={field.id}
@@ -417,8 +451,8 @@ export default function ApartmentForm() {
                     إلغاء
                   </Button>
                 </Link>
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   className="bg-primary text-black hover:bg-primary/90 font-bold h-12 px-8"
                   disabled={createMutation.isPending || updateMutation.isPending}
                 >
