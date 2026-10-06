@@ -32,6 +32,10 @@ The platform streamlines furnished rental operations by offering:
 - Localized tenant interaction: Frictionless direct inquiry routing via WhatsApp and direct call channels tailored to Egyptian real estate practices.
 - Centralized administration: Secure back-office portal allowing property managers to maintain apartment portfolios, update rental tariffs, and monitor occupancy metrics.
 
+<p align="center">
+  <img src="./docs/screenshots/homepage-hero.png" alt="Homepage Hero Showcase" width="850" />
+</p>
+
 ---
 
 ## Key Features
@@ -43,12 +47,20 @@ The platform streamlines furnished rental operations by offering:
 - Direct Contact and Booking Inquiries: Integrated action channels allowing prospective tenants to initiate direct inquiries via WhatsApp or phone.
 - Responsive Design: Optimized for seamless operation across desktop workstations, tablets, and mobile devices.
 
+<p align="center">
+  <img src="./docs/screenshots/apartments-listing.png" alt="Apartments Directory and Search Filters" width="850" />
+</p>
+
 ### Administrative Management
 - Secure Authentication: Password-protected session management for authorized platform administrators.
 - Listing Lifecycle Operations: Create, edit, inspect, and remove apartment units.
 - Real-Time Status Toggles: Update apartment status between available and unavailable with instant storefront reflection.
 - Media Upload Pipeline: Integrated file upload endpoint supporting image storage for apartment galleries.
 - Platform Analytics: Overview counters tracking aggregate apartments, active inventory, and geographical distribution.
+
+<p align="center">
+  <img src="./docs/screenshots/admin-login.png" alt="Administrative Portal Authentication" width="650" />
+</p>
 
 ---
 
