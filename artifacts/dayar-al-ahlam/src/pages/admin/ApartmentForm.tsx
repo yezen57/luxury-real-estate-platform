@@ -2,11 +2,11 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useCreateApartment, useUpdateApartment, useGetApartment, getListApartmentsQueryKey, getGetStatsQueryKey, getGetApartmentQueryKey } from "@workspace/api-client-react";
+import { useCreateApartment, useUpdateApartment, useGetApartment, getListApartmentsQueryKey, getGetStatsQueryKey, getGetApartmentQueryKey, useUploadImage } from "@workspace/api-client-react";
 import { useParams, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import {
   Form,
   FormControl,
@@ -19,8 +19,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, ArrowRight } from "lucide-react";
+import { ArrowRight, Plus, Trash2, Upload, Loader2 } from "lucide-react";
 import { Link } from "wouter";
+import { useTheme } from "@/contexts/theme";
+import { cn } from "@/lib/utils";
 
 const formSchema = z.object({
   apartmentNumber: z.string().min(1, "رقم الوحدة مطلوب"),
@@ -49,13 +51,21 @@ export default function ApartmentForm() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
 
   const { data: apartment, isLoading: isLoadingApartment } = useGetApartment(id || "", {
-    query: { enabled: isEdit }
+    query: {
+      enabled: isEdit,
+      queryKey: getGetApartmentQueryKey(id || "")
+    }
   });
 
   const createMutation = useCreateApartment();
   const updateMutation = useUpdateApartment();
+  const uploadMutation = useUploadImage();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -123,9 +133,17 @@ export default function ApartmentForm() {
             queryClient.invalidateQueries({ queryKey: getGetApartmentQueryKey(id) });
             setLocation("/admin");
           },
-          onError: (err) => {
+          onError: (err: any) => {
             console.error(err);
-            toast({ variant: "destructive", title: "حدث خطأ أثناء التحديث" });
+            if (err?.response?.status === 401 || err?.status === 401) {
+              toast({ variant: "destructive", title: "غير مصرح", description: "يرجى تسجيل الدخول أولاً." });
+              setLocation("/admin/login");
+            } else if (err?.response?.status === 409 || err?.status === 409) {
+              toast({ variant: "destructive", title: "رقم الوحدة مكرر", description: "رقم الوحدة مستخدم بالفعل، يرجى اختيار رقم آخر." });
+              form.setError("apartmentNumber", { message: "هذا الرقم مستخدم بالفعل" });
+            } else {
+              toast({ variant: "destructive", title: "حدث خطأ أثناء التحديث", description: err?.response?.data?.error || err?.message || "حاول مرة أخرى." });
+            }
           }
         }
       );
@@ -139,12 +157,37 @@ export default function ApartmentForm() {
             queryClient.invalidateQueries({ queryKey: getGetStatsQueryKey() });
             setLocation("/admin");
           },
-          onError: (err) => {
+          onError: (err: any) => {
             console.error(err);
-            toast({ variant: "destructive", title: "حدث خطأ أثناء الإضافة، تأكد من تسجيل الدخول" });
+            if (err?.response?.status === 401 || err?.status === 401) {
+              toast({ variant: "destructive", title: "غير مصرح", description: "يرجى تسجيل الدخول أولاً من صفحة الإدارة." });
+              setLocation("/admin/login");
+            } else if (err?.response?.status === 409 || err?.status === 409) {
+              toast({ variant: "destructive", title: "رقم الوحدة مكرر", description: "رقم الوحدة مستخدم بالفعل، يرجى اختيار رقم آخر." });
+              form.setError("apartmentNumber", { message: "هذا الرقم مستخدم بالفعل" });
+            } else {
+              toast({ variant: "destructive", title: "حدث خطأ أثناء الإضافة", description: err?.response?.data?.error || err?.message || "تأكد من ملء جميع الحقول وحاول مرة أخرى." });
+            }
           }
         }
       );
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const response = await uploadMutation.mutateAsync({ data: { image: file } });
+      if (response.url) {
+        append({ url: response.url });
+        toast({ title: "تم الرفع بنجاح", description: "تم رفع الصورة وإضافتها للوحدة." });
+      }
+    } catch (err: any) {
+      toast({ variant: "destructive", title: "حدث خطأ", description: err?.response?.data?.error || "فشل في رفع الصورة" });
+    } finally {
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
@@ -164,21 +207,26 @@ export default function ApartmentForm() {
     );
   }
 
+  const inputClass = cn("h-12 border", isDark ? "bg-black/50 border-white/10 text-white" : "bg-white border-black/10 text-gray-900");
+  const labelClass = isDark ? "text-white/80" : "text-black/80";
+  const selectContentClass = cn("border", isDark ? "bg-gray-900 border-white/10 text-white" : "bg-white border-black/10 text-gray-900");
+  const selectTriggerClass = cn("h-12 border", isDark ? "bg-black/50 border-white/10 text-white" : "bg-white border-black/10 text-gray-900");
+
   return (
     <AdminLayout>
       <div className="max-w-4xl mx-auto pb-12">
         <div className="flex items-center gap-4 mb-8">
           <Link href="/admin">
-            <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
+            <Button variant="ghost" size="icon" className={cn(isDark ? "text-white hover:bg-white/10" : "text-black hover:bg-black/5")}>
               <ArrowRight className="h-5 w-5" />
             </Button>
           </Link>
-          <h1 className="text-3xl font-bold text-white">
+          <h1 className={cn("text-3xl font-bold", isDark ? "text-white" : "text-gray-900")}>
             {isEdit ? "تعديل وحدة سكنية" : "إضافة وحدة جديدة"}
           </h1>
         </div>
 
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-6 md:p-8">
+        <div className={cn("border rounded-2xl p-6 md:p-8", isDark ? "bg-white/5 border-white/10" : "bg-white border-black/10 shadow-sm")}>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
 
@@ -188,11 +236,11 @@ export default function ApartmentForm() {
                   name="apartmentNumber"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-white/80">رقم الوحدة (مثال: 00001)</FormLabel>
+                      <FormLabel className={labelClass}>رقم الوحدة (مثال: 00001)</FormLabel>
                       <FormControl>
-                        <Input className="bg-black/50 border-white/10 text-white h-12 font-mono" placeholder="00001" {...field} />
+                        <Input className={`${inputClass} font-mono`} placeholder="00001" {...field} />
                       </FormControl>
-                      <FormMessage className="text-red-400" />
+                      <FormMessage className="text-red-500" />
                     </FormItem>
                   )}
                 />
@@ -201,11 +249,11 @@ export default function ApartmentForm() {
                   name="title"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-white/80">اسم الوحدة (للعرض)</FormLabel>
+                      <FormLabel className={labelClass}>اسم الوحدة (للعرض)</FormLabel>
                       <FormControl>
-                        <Input className="bg-black/50 border-white/10 text-white h-12" {...field} />
+                        <Input className={inputClass} {...field} />
                       </FormControl>
-                      <FormMessage className="text-red-400" />
+                      <FormMessage className="text-red-500" />
                     </FormItem>
                   )}
                 />
@@ -217,20 +265,20 @@ export default function ApartmentForm() {
                   name="city"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-white/80">المدينة</FormLabel>
+                      <FormLabel className={labelClass}>المدينة</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
-                          <SelectTrigger className="bg-black/50 border-white/10 text-white h-12">
+                          <SelectTrigger className={selectTriggerClass}>
                             <SelectValue placeholder="اختر المدينة" />
                           </SelectTrigger>
                         </FormControl>
-                        <SelectContent className="bg-gray-900 border-white/10 text-white">
+                        <SelectContent className={selectContentClass}>
                           {egyptCities.map(c => (
                             <SelectItem key={c} value={c}>{c}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
-                      <FormMessage className="text-red-400" />
+                      <FormMessage className="text-red-500" />
                     </FormItem>
                   )}
                 />
@@ -239,11 +287,11 @@ export default function ApartmentForm() {
                   name="district"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-white/80">الحي / المنطقة</FormLabel>
+                      <FormLabel className={labelClass}>الحي / المنطقة</FormLabel>
                       <FormControl>
-                        <Input className="bg-black/50 border-white/10 text-white h-12" {...field} />
+                        <Input className={inputClass} {...field} />
                       </FormControl>
-                      <FormMessage className="text-red-400" />
+                      <FormMessage className="text-red-500" />
                     </FormItem>
                   )}
                 />
@@ -252,11 +300,11 @@ export default function ApartmentForm() {
                   name="address"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-white/80">العنوان التفصيلي</FormLabel>
+                      <FormLabel className={labelClass}>العنوان التفصيلي</FormLabel>
                       <FormControl>
-                        <Input className="bg-black/50 border-white/10 text-white h-12" {...field} />
+                        <Input className={inputClass} {...field} />
                       </FormControl>
-                      <FormMessage className="text-red-400" />
+                      <FormMessage className="text-red-500" />
                     </FormItem>
                   )}
                 />
@@ -268,11 +316,11 @@ export default function ApartmentForm() {
                   name="rooms"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-white/80">عدد الغرف</FormLabel>
+                      <FormLabel className={labelClass}>عدد الغرف</FormLabel>
                       <FormControl>
-                        <Input type="number" min={1} className="bg-black/50 border-white/10 text-white h-12" {...field} />
+                        <Input type="number" min={1} className={inputClass} {...field} />
                       </FormControl>
-                      <FormMessage className="text-red-400" />
+                      <FormMessage className="text-red-500" />
                     </FormItem>
                   )}
                 />
@@ -281,11 +329,11 @@ export default function ApartmentForm() {
                   name="bathrooms"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-white/80">عدد الحمامات</FormLabel>
+                      <FormLabel className={labelClass}>عدد الحمامات</FormLabel>
                       <FormControl>
-                        <Input type="number" min={1} className="bg-black/50 border-white/10 text-white h-12" {...field} />
+                        <Input type="number" min={1} className={inputClass} {...field} />
                       </FormControl>
-                      <FormMessage className="text-red-400" />
+                      <FormMessage className="text-red-500" />
                     </FormItem>
                   )}
                 />
@@ -294,11 +342,11 @@ export default function ApartmentForm() {
                   name="area"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-white/80">المساحة (متر مربع)</FormLabel>
+                      <FormLabel className={labelClass}>المساحة (متر مربع)</FormLabel>
                       <FormControl>
-                        <Input type="number" min={1} className="bg-black/50 border-white/10 text-white h-12" {...field} />
+                        <Input type="number" min={1} className={inputClass} {...field} />
                       </FormControl>
-                      <FormMessage className="text-red-400" />
+                      <FormMessage className="text-red-500" />
                     </FormItem>
                   )}
                 />
@@ -310,11 +358,11 @@ export default function ApartmentForm() {
                   name="priceDay"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-white/80">السعر اليومي (ج.م)</FormLabel>
+                      <FormLabel className={labelClass}>السعر اليومي (ج.م)</FormLabel>
                       <FormControl>
-                        <Input type="number" min={1} className="bg-black/50 border-white/10 text-white h-12" {...field} />
+                        <Input type="number" min={1} className={inputClass} {...field} />
                       </FormControl>
-                      <FormMessage className="text-red-400" />
+                      <FormMessage className="text-red-500" />
                     </FormItem>
                   )}
                 />
@@ -323,11 +371,11 @@ export default function ApartmentForm() {
                   name="priceWeek"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-white/80">السعر الأسبوعي (ج.م)</FormLabel>
+                      <FormLabel className={labelClass}>السعر الأسبوعي (ج.م)</FormLabel>
                       <FormControl>
-                        <Input type="number" min={1} className="bg-black/50 border-white/10 text-white h-12" {...field} />
+                        <Input type="number" min={1} className={inputClass} {...field} />
                       </FormControl>
-                      <FormMessage className="text-red-400" />
+                      <FormMessage className="text-red-500" />
                     </FormItem>
                   )}
                 />
@@ -336,11 +384,11 @@ export default function ApartmentForm() {
                   name="priceMonth"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-white/80">السعر الشهري (ج.م)</FormLabel>
+                      <FormLabel className={labelClass}>السعر الشهري (ج.م)</FormLabel>
                       <FormControl>
-                        <Input type="number" min={1} className="bg-black/50 border-white/10 text-white h-12" {...field} />
+                        <Input type="number" min={1} className={inputClass} {...field} />
                       </FormControl>
-                      <FormMessage className="text-red-400" />
+                      <FormMessage className="text-red-500" />
                     </FormItem>
                   )}
                 />
@@ -351,19 +399,19 @@ export default function ApartmentForm() {
                 name="status"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-white/80">الحالة</FormLabel>
+                    <FormLabel className={labelClass}>الحالة</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
-                        <SelectTrigger className="bg-black/50 border-white/10 text-white h-12">
+                        <SelectTrigger className={selectTriggerClass}>
                           <SelectValue placeholder="اختر حالة الوحدة" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent className="bg-gray-900 border-white/10 text-white">
+                      <SelectContent className={selectContentClass}>
                         <SelectItem value="available">متاح</SelectItem>
                         <SelectItem value="unavailable">غير متاح</SelectItem>
                       </SelectContent>
                     </Select>
-                    <FormMessage className="text-red-400" />
+                    <FormMessage className="text-red-500" />
                   </FormItem>
                 )}
               />
@@ -373,31 +421,52 @@ export default function ApartmentForm() {
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-white/80">الوصف</FormLabel>
+                    <FormLabel className={labelClass}>الوصف</FormLabel>
                     <FormControl>
                       <Textarea
-                        className="bg-black/50 border-white/10 text-white min-h-[150px] resize-y"
+                        className={cn("border min-h-[150px] resize-y", isDark ? "bg-black/50 border-white/10 text-white" : "bg-white border-black/10 text-gray-900")}
                         {...field}
                       />
                     </FormControl>
-                    <FormMessage className="text-red-400" />
+                    <FormMessage className="text-red-500" />
                   </FormItem>
                 )}
               />
 
+              {/* Images Section */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <FormLabel className="text-white/80 text-lg">روابط الصور</FormLabel>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => append({ url: "" })}
-                    className="border-primary text-primary hover:bg-primary/10"
-                  >
-                    <Plus className="h-4 w-4 ml-2" />
-                    إضافة صورة
-                  </Button>
+                  <label className={cn("text-lg font-medium", isDark ? "text-white/80" : "text-black/80")}>الصور</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      ref={fileInputRef}
+                      onChange={handleFileUpload}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="border-primary text-primary hover:bg-primary/10"
+                      disabled={uploadMutation.isPending}
+                    >
+                      {uploadMutation.isPending ? <Loader2 className="h-4 w-4 ml-2 animate-spin" /> : <Upload className="h-4 w-4 ml-2" />}
+                      رفع صورة
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => append({ url: "" })}
+                      className="border-primary text-primary hover:bg-primary/10"
+                    >
+                      <Plus className="h-4 w-4 ml-2" />
+                      إضافة رابط
+                    </Button>
+                  </div>
                 </div>
 
                 {fields.map((field, index) => (
@@ -409,9 +478,9 @@ export default function ApartmentForm() {
                       <FormItem className="flex items-end gap-2">
                         <div className="flex-1">
                           <FormControl>
-                            <Input placeholder="رابط الصورة (URL)" className="bg-black/50 border-white/10 text-white h-12" {...field} />
+                            <Input placeholder="رابط الصورة (URL)" className={inputClass} {...field} />
                           </FormControl>
-                          <FormMessage className="text-red-400" />
+                          <FormMessage className="text-red-500" />
                         </div>
                         <Button
                           type="button"
@@ -427,7 +496,7 @@ export default function ApartmentForm() {
                   />
                 ))}
                 {fields.length === 0 && (
-                  <p className="text-white/40 text-sm italic">لم يتم إضافة صور. سيتم استخدام شعار ديار الأحلام كصورة افتراضية.</p>
+                  <p className={cn("text-sm italic", isDark ? "text-white/40" : "text-black/40")}>لم يتم إضافة صور. سيتم استخدام شعار ديار الأحلام كصورة افتراضية.</p>
                 )}
               </div>
 
@@ -436,18 +505,18 @@ export default function ApartmentForm() {
                 name="video"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-white/80">رابط الفيديو (اختياري)</FormLabel>
+                    <FormLabel className={labelClass}>رابط الفيديو (اختياري)</FormLabel>
                     <FormControl>
-                      <Input placeholder="https://..." className="bg-black/50 border-white/10 text-white h-12" {...field} value={field.value || ""} />
+                      <Input placeholder="https://..." className={inputClass} {...field} value={field.value || ""} />
                     </FormControl>
-                    <FormMessage className="text-red-400" />
+                    <FormMessage className="text-red-500" />
                   </FormItem>
                 )}
               />
 
-              <div className="pt-6 border-t border-white/10 flex justify-end gap-4">
+              <div className={cn("pt-6 border-t flex justify-end gap-4", isDark ? "border-white/10" : "border-black/10")}>
                 <Link href="/admin">
-                  <Button type="button" variant="outline" className="border-white/10 text-white hover:bg-white/5 h-12 px-8">
+                  <Button type="button" variant="outline" className={cn("border h-12 px-8", isDark ? "border-white/10 text-white hover:bg-white/5" : "border-black/10 text-black hover:bg-black/5")}>
                     إلغاء
                   </Button>
                 </Link>

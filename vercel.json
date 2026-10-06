@@ -1,0 +1,30 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "artifacts/api-server/src/app.ts",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "artifacts/dayar-al-ahlam/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist/public"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/artifacts/api-server/src/app.ts"
+    },
+    {
+      "src": "/(.*\\.[a-zA-Z0-9]+)",
+      "dest": "/artifacts/dayar-al-ahlam/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/artifacts/dayar-al-ahlam/index.html"
+    }
+  ]
+}

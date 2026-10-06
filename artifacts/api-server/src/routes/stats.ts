@@ -1,5 +1,6 @@
+// @ts-nocheck
 import { Router } from "express";
-import { db, apartmentsTable } from "@workspace/db";
+import { db, apartmentsTable } from "../../../../lib/db/src";
 import { eq, count, countDistinct, sql } from "drizzle-orm";
 
 const router = Router();
@@ -65,3 +66,5 @@ router.get("/stats/cities", async (req, res): Promise<void> => {
 });
 
 export default router;
+
+

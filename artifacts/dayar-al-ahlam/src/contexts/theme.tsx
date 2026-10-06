@@ -14,6 +14,7 @@ const ThemeContext = createContext<ThemeContextValue>({
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>(() => {
+    // Check localStorage first, then system preference
     const stored = localStorage.getItem("dayar-theme") as Theme | null;
     if (stored === "dark" || stored === "light") return stored;
     return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
@@ -21,6 +22,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const root = document.documentElement;
+    root.setAttribute("data-theme", theme);
     root.classList.remove("dark", "light");
     root.classList.add(theme);
     localStorage.setItem("dayar-theme", theme);

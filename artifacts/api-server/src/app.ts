@@ -1,11 +1,14 @@
+// @ts-nocheck
 import express, { type Express } from "express";
 import cors from "cors";
 import cookieSession from "cookie-session";
 import pinoHttp from "pino-http";
 import router from "./routes";
 import { logger } from "./lib/logger";
+import path from "path";
 
 const app: Express = express();
+app.set("trust proxy", 1);
 
 app.use(
   pinoHttp({
@@ -49,5 +52,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/api", router);
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 export default app;

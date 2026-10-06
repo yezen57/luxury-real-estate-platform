@@ -7,8 +7,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface CityCount {
-  city: string;
-  count: number;
+export interface UploadImageRequest {
+  image?: Blob;
 }
 

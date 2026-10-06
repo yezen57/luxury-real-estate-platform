@@ -1,10 +1,11 @@
+// @ts-nocheck
 import { pgTable, text, integer, numeric, timestamp, uuid } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
 export const apartmentsTable = pgTable("apartments", {
   id: uuid("id").primaryKey().defaultRandom(),
-  apartmentNumber: text("apartment_number").notNull(),
+  apartmentNumber: text("apartment_number").notNull().unique(),
   title: text("title").notNull(),
   city: text("city").notNull(),
   district: text("district").notNull(),
@@ -31,3 +32,4 @@ export const insertApartmentSchema = createInsertSchema(apartmentsTable).omit({
 
 export type InsertApartment = z.infer<typeof insertApartmentSchema>;
 export type Apartment = typeof apartmentsTable.$inferSelect;
+

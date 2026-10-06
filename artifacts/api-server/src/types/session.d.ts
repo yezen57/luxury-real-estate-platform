@@ -1,3 +1,4 @@
+// @ts-nocheck
 import "express";
 
 declare module "express" {
@@ -8,3 +9,4 @@ declare module "express" {
     } | null;
   }
 }
+

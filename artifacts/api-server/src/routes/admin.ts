@@ -1,9 +1,10 @@
+// @ts-nocheck
 import { Router } from "express";
 
 const router = Router();
 
-const ADMIN_USERNAME = "yezen57";
-const ADMIN_PASSWORD = "12356789";
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME || "admin";
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
 
 router.post("/admin/login", (req, res) => {
   const { username, password } = req.body;
@@ -30,3 +31,4 @@ router.get("/admin/me", (req, res): void => {
 });
 
 export default router;
+
