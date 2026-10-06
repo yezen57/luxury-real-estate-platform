@@ -1,8 +1,12 @@
 <p align="center">
-  <img src="./artifacts/dayar-al-ahlam/public/logo-white.png" alt="Dayar Al-Ahlam Logo" width="220" />
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./artifacts/dayar-al-ahlam/public/logo-white.png">
+    <source media="(prefers-color-scheme: light)" srcset="./artifacts/dayar-al-ahlam/public/logo-dark.png">
+    <img alt="Dayar Al-Ahlam Logo" src="./artifacts/dayar-al-ahlam/public/logo-dark.png" width="200">
+  </picture>
 </p>
 
-# Dayar Al-Ahlam
+# Luxury Real Estate Platform
 
 > Premier luxury real estate and apartment rental platform engineered for high-end properties, featuring full right-to-left (RTL) Arabic localization, interactive search and filtering, and a comprehensive administrative portal.
 
@@ -10,13 +14,9 @@
 
 ## Overview
 
-Dayar Al-Ahlam is a full-stack real estate web application tailored for luxury residential rentals and property showcase. Built with a modern TypeScript monorepo architecture, the platform pairs a dynamic, responsive client interface with an Express-powered REST API and PostgreSQL database backed by Drizzle ORM.
+A modern full-stack real estate web application tailored for luxury residential rentals and property showcase. Built with a modern TypeScript monorepo architecture, the platform pairs a dynamic, responsive client interface with an Express-powered REST API and PostgreSQL database backed by Drizzle ORM.
 
 The platform provides end users with property search, multi-criteria filtering across Egyptian metropolitan regions, image carousels, and tiered pricing structures (daily, weekly, monthly). Property administrators have access to a secure management portal to publish new listings, update availability, upload imagery, and monitor key operational metrics.
-
-<p align="center">
-  <img src="./artifacts/dayar-al-ahlam/public/opengraph.jpg" alt="Dayar Al-Ahlam Platform Preview" width="800" />
-</p>
 
 ---
 

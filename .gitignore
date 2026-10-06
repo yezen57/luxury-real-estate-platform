@@ -48,7 +48,6 @@ temp/
 *.tsbuildinfo
 artifacts/*/dist/
 artifacts/*/.tsbuildinfo
-.replit-artifact/
 
 # ------------------------------------------------------------------------------
 # Deployment & Hosting Platforms
@@ -135,7 +134,7 @@ desktop.ini
 *.swp
 
 # ------------------------------------------------------------------------------
-# Replit & Cloud IDE Artifacts
+# Local Caches & Cloud Artifacts
 # ------------------------------------------------------------------------------
 .cache/
 .local/
