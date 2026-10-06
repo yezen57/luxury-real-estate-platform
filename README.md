@@ -8,15 +8,29 @@
 
 # Luxury Real Estate Platform
 
-> Premier luxury real estate and apartment rental platform engineered for high-end properties, featuring full right-to-left (RTL) Arabic localization, interactive search and filtering, and a comprehensive administrative portal.
+> Commercial full-stack web platform built for a premier real estate enterprise specializing in luxury furnished apartment rentals across Egypt, featuring native Arabic right-to-left (RTL) localization, dynamic multi-tier pricing, and an administrative property management portal.
+
+**Live Application:** [https://dayar-ten.vercel.app](https://dayar-ten.vercel.app/)
+
+---
+
+## Live Demo
+
+The platform is deployed and publicly accessible:
+- Production Showcase: [https://dayar-ten.vercel.app](https://dayar-ten.vercel.app/)
+- Administrative Management: [https://dayar-ten.vercel.app/admin](https://dayar-ten.vercel.app/admin)
 
 ---
 
 ## Overview
 
-A modern full-stack real estate web application tailored for luxury residential rentals and property showcase. Built with a modern TypeScript monorepo architecture, the platform pairs a dynamic, responsive client interface with an Express-powered REST API and PostgreSQL database backed by Drizzle ORM.
+This project was engineered as a custom digital solution for a real estate firm operating in Egypt that specializes in premium furnished apartment rentals. Designed to address the demands of both local clients and international visitors seeking high-standard accommodation, the platform serves prime Egyptian metropolitan and vacation destinations including Cairo (Zamalek, New Cairo, Maadi), Giza (Sheikh Zayed, 6th of October), Alexandria, and the North Coast.
 
-The platform provides end users with property search, multi-criteria filtering across Egyptian metropolitan regions, image carousels, and tiered pricing structures (daily, weekly, monthly). Property administrators have access to a secure management portal to publish new listings, update availability, upload imagery, and monitor key operational metrics.
+The platform streamlines furnished rental operations by offering:
+- Multi-tier flexible booking models: Dedicated rate structures for daily, weekly, and monthly furnished stays.
+- Real-time inventory and availability: Instant updates between vacant and occupied units to avoid double bookings.
+- Localized tenant interaction: Frictionless direct inquiry routing via WhatsApp and direct call channels tailored to Egyptian real estate practices.
+- Centralized administration: Secure back-office portal allowing property managers to maintain apartment portfolios, update rental tariffs, and monitor occupancy metrics.
 
 ---
 
